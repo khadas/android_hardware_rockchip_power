@@ -61,15 +61,19 @@
 #define GPU_MIN_FREQ "/sys/class/devfreq/ff9a0000.gpu/min_freq"
 #define GPU_MAX_FREQ "/sys/class/devfreq/ff9a0000.gpu/max_freq"
 
+#ifdef DDR_BOOST_SUPPORT
 #define DDR_GOV_PATH "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/governor"
 #define DDR_AVAIL_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/available_frequencies"
 #define DDR_MIN_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/min_freq"
 #define DDR_MAX_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/max_freq"
+#endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static char cpu_clust1_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+#ifdef DDR_BOOST_SUPPORT
 static char ddr_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+#endif
 
 static void sysfs_write(char *path, char *s)
 {
@@ -140,6 +144,7 @@ static void gpu_boost(int max, int min)
         ALOGE("Invalid min freq can not be set!");
 }
 
+#ifdef DDR_BOOST_SUPPORT
 /*************** Modify ddr max && min freq for simple_ondemand mode **********************/
 static void ddr_boost(int max,int min)
 {
@@ -155,6 +160,7 @@ static void ddr_boost(int max,int min)
     else
         ALOGE("Invalid min freq can not be set!");
 }
+#endif
 
 /******** Current cpu gpu ddr available frequencies  *********/
 
@@ -171,7 +177,9 @@ static void performance_boost(int on)
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "performance" : "interactive");
     sysfs_write(CPU_CLUST1_GOV_PATH, on ? "performance" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
+#ifdef DDR_BOOST_SUPPORT
     sysfs_write(DDR_GOV_PATH,on ? "performance" : "simple_ondemand");
+#endif
 }
 
 /************** Modify cpu gpu ddr to powersave mode ************************/
@@ -181,7 +189,9 @@ static void low_power_boost(int on)
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
     sysfs_write(CPU_CLUST1_GOV_PATH, on ? "powersave" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+#ifdef DDR_BOOST_SUPPORT
     sysfs_write(DDR_GOV_PATH,on ? "powersave" : "simple_ondemand");
+#endif
 }
 
 static void rk_power_init(struct power_module *module)
@@ -192,7 +202,9 @@ static void rk_power_init(struct power_module *module)
     char cpu_clus0_freqs[BUFFER_LENGTH];
     char cpu_clus1_freqs[BUFFER_LENGTH];
     char gpu_freqs[BUFFER_LENGTH] ;
+#ifdef DDR_BOOST_SUPPORT
     char ddr_freqs[BUFFER_LENGTH];
+#endif
     char*freq_split;
 
     /*********************** obtain cpu cluster0 available freqs **************************/
@@ -254,6 +266,7 @@ static void rk_power_init(struct power_module *module)
     }
 
 
+#ifdef DDR_BOOST_SUPPORT
     /*********************** obtain ddr available freqs **************************/
     if(fd = open (DDR_AVAIL_FREQ,O_RDONLY)){
         count = read(fd,ddr_freqs,sizeof(ddr_freqs)-1);
@@ -272,6 +285,7 @@ static void rk_power_init(struct power_module *module)
         strcpy(ddr_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("ddr available freq[%d]:%s\n",i,ddr_available_freqs[i]);
     }
+#endif
 }
 
 /*performs power management actions upon the
@@ -284,12 +298,18 @@ static void rk_power_set_interactive(struct power_module *module, int on)
 {
     /*************Add appropriate actions for specific platform && product type *****************/
     if(on) {
-        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet"))
+        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
+#ifdef DDR_BOOST_SUPPORT
             ddr_boost(4,1);
+#endif
+        }
 
     } else {
-        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet"))
+        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
+#ifdef DDR_BOOST_SUPPORT
             ddr_boost(4,0);
+#endif
+        }
     }
 }
 
@@ -324,7 +344,9 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
              */
             mode = *(int*)data;
             if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
+#ifdef DDR_BOOST_SUPPORT
                 ddr_boost( (mode >> 16) & 0xF , mode & 0xF);
+#endif
             }
         }
         break;
