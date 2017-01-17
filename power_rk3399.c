@@ -352,10 +352,10 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
         break;
 
     case POWER_HINT_LOW_POWER:
-        if(data!=NULL) {
+        /*if(data!=NULL) {
             mode = *(int*)data;
             low_power_boost(mode);
-        }
+        }*/
         break;
 
     case POWER_HINT_SUSTAINED_PERFORMANCE:
