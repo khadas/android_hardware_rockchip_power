@@ -362,6 +362,18 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
         if(data!=NULL) {
             mode = *(int*)data;
             performance_boost(mode);
+        } else {
+            mode = 0;
+            performance_boost(mode);
+        }
+        break;
+    case POWER_HINT_PERFORMANCE:
+        if(data!=NULL) {
+            mode = *(int*)data;
+            performance_boost(mode);
+        } else {
+            mode = 0;
+            performance_boost(mode);
         }
         break;
     case POWER_HINT_VR_MODE:
