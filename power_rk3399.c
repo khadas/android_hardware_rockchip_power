@@ -41,6 +41,7 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
+#define DDR_BOOST_SUPPORT 1
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
 
@@ -62,10 +63,10 @@
 #define GPU_MAX_FREQ "/sys/class/devfreq/ff9a0000.gpu/max_freq"
 
 #ifdef DDR_BOOST_SUPPORT
-#define DDR_GOV_PATH "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/governor"
-#define DDR_AVAIL_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/available_frequencies"
-#define DDR_MIN_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/min_freq"
-#define DDR_MAX_FREQ "/sys/bus/platform/drivers/rk3399-dmc-freq/dmc/devfreq/dmc/max_freq"
+#define DDR_GOV_PATH "/sys/devices/platform/dmc/devfreq/dmc/governor"
+#define DDR_AVAIL_FREQ "/sys/devices/platform/dmc/devfreq/dmc/available_frequencies"
+#define DDR_MIN_FREQ "/sys/devices/platform/dmc/devfreq/dmc/min_freq"
+#define DDR_MAX_FREQ "/sys/devices/platform/dmc/devfreq/dmc/max_freq"
 #endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
@@ -297,20 +298,6 @@ static void rk_power_init(struct power_module *module)
 static void rk_power_set_interactive(struct power_module *module, int on)
 {
     /*************Add appropriate actions for specific platform && product type *****************/
-    if(on) {
-        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
-#ifdef DDR_BOOST_SUPPORT
-            ddr_boost(4,1);
-#endif
-        }
-
-    } else {
-        if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
-#ifdef DDR_BOOST_SUPPORT
-            ddr_boost(4,0);
-#endif
-        }
-    }
 }
 
 /*
@@ -332,6 +319,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
 
     case POWER_HINT_VIDEO_DECODE:
         if(data!=NULL) {
+            if(DEBUG_EN)ALOGI("POWER_HINT_VIDEO_DECODE Entered");
             /**********Custom data defination**********
              *mode & 0xF         : ddr min freq
              *(mode >> 4) & 0xF  : gpu min freq
@@ -343,11 +331,10 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
              *(mode >> 28) & 0xF : cpu clus0 max freq
              */
             mode = *(int*)data;
-            if(!strcmp(TARGET_BOARD_PLATFORM,"rk3399") && !strcmp(TARGET_BOARD_PLATFORM_PRODUCT,"tablet")){
+            if(DEBUG_EN)ALOGI("mode:%x",mode);
 #ifdef DDR_BOOST_SUPPORT
-                ddr_boost( (mode >> 16) & 0xF , mode & 0xF);
+            ddr_boost( (mode >> 16) & 0xF , mode & 0xF);
 #endif
-            }
         }
         break;
 
