@@ -41,7 +41,7 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-#define DDR_BOOST_SUPPORT 1
+//#define DDR_BOOST_SUPPORT 1
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
 
