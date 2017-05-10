@@ -54,8 +54,13 @@ LOCAL_CFLAGS += -DTARGET_BOARD_PLATFORM_PRODUCT=\"$(TARGET_BOARD_PLATFORM_PRODUC
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3399)
 LOCAL_SRC_FILES := power_rk3399.c
 endif
+
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3368)
 LOCAL_SRC_FILES := power_rk3368.c
+endif
+
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk312x)
+LOCAL_SRC_FILES := power_rk312x.c
 endif
 
 include $(BUILD_SHARED_LIBRARY)
