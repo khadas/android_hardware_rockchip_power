@@ -195,11 +195,7 @@ static void rk_power_init(struct power_module *module)
  */
 static void rk_power_set_interactive(struct power_module *module, int on)
 {
-    /*************Add appropriate actions for specific platform && product type *****************/
-    sysfs_write("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq", on ? "1200000" : "816000");
-    sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
-    sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
-    sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
+
 }
 
 /*
