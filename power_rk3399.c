@@ -34,14 +34,14 @@
 #include <fcntl.h>
 
 #define LOG_TAG "RKPowerHAL"
-#define DEBUG_EN 1
+#define DEBUG_EN 0
 #include <utils/Log.h>
 #include <cutils/properties.h>
 
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-//#define DDR_BOOST_SUPPORT 1
+#define DDR_BOOST_SUPPORT 0
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
 
@@ -70,10 +70,15 @@
 #endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int cpu_clust0_max_index = 0;
 static char cpu_clust1_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int cpu_clust1_max_index = 0;
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int gpu_max_index = 0;
+
 #ifdef DDR_BOOST_SUPPORT
 static char ddr_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int ddr_max_index = 0;
 #endif
 
 static void sysfs_write(char *path, char *s)
@@ -101,48 +106,60 @@ static void sysfs_write(char *path, char *s)
 static void cpu_clus0_boost(int max, int min )
 {
     if(DEBUG_EN)ALOGI("RK cpu_clus0_boost Entered!");
-    if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",max,cpu_clust0_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",min,cpu_clust0_available_freqs[min]);
-    if( *cpu_clust0_available_freqs[max]>='0' && *cpu_clust0_available_freqs[max]<='9' )
+
+    if(max>=0 && max<=cpu_clust0_max_index && *cpu_clust0_available_freqs[max]>='0' && *cpu_clust0_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",max,cpu_clust0_available_freqs[max]);
         sysfs_write(CPU_CLUST0_SCAL_MAX_FREQ,cpu_clust0_available_freqs[max]);
-    else
+    } else {
         ALOGE("Invalid max freq can not be set!");
-    if( *cpu_clust0_available_freqs[min]>='0' && *cpu_clust0_available_freqs[min]<='9' )
+    }
+
+    if(min>=0 && min<=cpu_clust0_max_index && *cpu_clust0_available_freqs[min]>='0' && *cpu_clust0_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",min,cpu_clust0_available_freqs[min]);
         sysfs_write(CPU_CLUST0_SCAL_MIN_FREQ,cpu_clust0_available_freqs[min]);
-    else
+    } else {
         ALOGE("Invalid min freq can not be set!");
+    }
 }
 
 /*************** Modify cpu clust1 scaling max && min freq for interactive mode **********************/
 static void cpu_clus1_boost(int max, int min )
 {
     if(DEBUG_EN)ALOGI("RK cpu_clus1_boost Entered!");
-    if(DEBUG_EN)ALOGI("cpu_clust1_available_freqs[%d]:%s",max,cpu_clust1_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("cpu_clust1_available_freqs[%d]:%s",min,cpu_clust1_available_freqs[min]);
-    if( *cpu_clust1_available_freqs[max]>='0' && *cpu_clust1_available_freqs[max]<='9' )
+
+    if(max>=0 && max<=cpu_clust1_max_index && *cpu_clust1_available_freqs[max]>='0' && *cpu_clust1_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust1_available_freqs[%d]:%s",max,cpu_clust1_available_freqs[max]);
         sysfs_write(CPU_CLUST1_SCAL_MAX_FREQ,cpu_clust1_available_freqs[max]);
-    else
+    } else {
         ALOGE("Invalid max freq can not be set!");
-    if( *cpu_clust1_available_freqs[min]>='0' && *cpu_clust1_available_freqs[min]<='9' )
+    }
+
+    if(min>=0 && min<=cpu_clust1_max_index && *cpu_clust1_available_freqs[min]>='0' && *cpu_clust1_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust1_available_freqs[%d]:%s",min,cpu_clust1_available_freqs[min]);
         sysfs_write(CPU_CLUST1_SCAL_MIN_FREQ,cpu_clust1_available_freqs[min]);
-    else
+    } else {
         ALOGE("Invalid min freq can not be set!");
+    }
 }
 
 /*************** Modify gpu max && min freq for simple_ondemand mode **********************/
 static void gpu_boost(int max, int min)
 {
     if(DEBUG_EN)ALOGI("RK gpu_boost Entered!");
-    if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",max,gpu_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",min,gpu_available_freqs[min]);
-    if( *gpu_available_freqs[max]>='0' && *gpu_available_freqs[max]<='9' )
+
+    if(max>=0 && max<=gpu_max_index && *gpu_available_freqs[max]>='0' && *gpu_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",max,gpu_available_freqs[max]);
         sysfs_write(GPU_MAX_FREQ,gpu_available_freqs[max]);
-    else
+    } else {
         ALOGE("Invalid max freq can not be set!");
-    if( *gpu_available_freqs[min]>='0' && *gpu_available_freqs[min]<='9' )
+    }
+
+    if(min>=0 && min<=gpu_max_index && *gpu_available_freqs[min]>='0' && *gpu_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",min,gpu_available_freqs[min]);
         sysfs_write(GPU_MIN_FREQ,gpu_available_freqs[min]);
-    else
+    } else {
         ALOGE("Invalid min freq can not be set!");
+    }
 }
 
 #ifdef DDR_BOOST_SUPPORT
@@ -150,16 +167,20 @@ static void gpu_boost(int max, int min)
 static void ddr_boost(int max,int min)
 {
     if(DEBUG_EN)ALOGI("RK ddr_boost Entered!");
-    if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",max,ddr_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",min,ddr_available_freqs[min]);
-    if( *ddr_available_freqs[max]>='0' && *ddr_available_freqs[max]<='9' )
+
+    if(max>=0 && max<=ddr_max_index && *ddr_available_freqs[max]>='0' && *ddr_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",max,ddr_available_freqs[max]);
         sysfs_write(DDR_MAX_FREQ,ddr_available_freqs[max]);
-    else
+    } else {
         ALOGE("Invalid max freq can not be set!");
-    if( *ddr_available_freqs[min]>='0' && *ddr_available_freqs[min]<='9' )
+    }
+
+    if(min>=0 && min<=ddr_max_index && *ddr_available_freqs[min]>='0' && *ddr_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",min,ddr_available_freqs[min]);
         sysfs_write(DDR_MIN_FREQ,ddr_available_freqs[min]);
-    else
+    } else {
         ALOGE("Invalid min freq can not be set!");
+    }
 }
 #endif
 
@@ -222,10 +243,12 @@ static void rk_power_init(struct power_module *module)
     freq_split = strtok(cpu_clus0_freqs," ");
     strcpy(cpu_clust0_available_freqs[0],freq_split);
     if(DEBUG_EN)ALOGI("cpu_clust0 available freq[0]:%s\n",cpu_clust0_available_freqs[0]);
-    for(i=1;freq_split= strtok(NULL," ");i++){
+    for(i=1;freq_split=strtok(NULL," ");i++){
         strcpy(cpu_clust0_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
     }
+    cpu_clust0_max_index = i-2;
+    if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
 
 
     /*********************** obtain cpu cluster1 available freqs **************************/
@@ -242,10 +265,12 @@ static void rk_power_init(struct power_module *module)
     freq_split = strtok(cpu_clus1_freqs," ");
     strcpy(cpu_clust1_available_freqs[0],freq_split);
     if(DEBUG_EN)ALOGI("cpu_clust1 available freq[0]:%s\n",cpu_clust1_available_freqs[0]);
-    for(i=1;freq_split= strtok(NULL," ");i++){
+    for(i=1;freq_split=strtok(NULL," ");i++){
         strcpy(cpu_clust1_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("cpu_clust1 available freq[%d]:%s\n",i,cpu_clust1_available_freqs[i]);
     }
+    cpu_clust1_max_index = i-2;
+    if(DEBUG_EN)ALOGI("cpu_clust1_max_index:%d\n",cpu_clust1_max_index);
 
     /*********************** obtain gpu available freqs **************************/
     if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
@@ -261,10 +286,12 @@ static void rk_power_init(struct power_module *module)
     freq_split = strtok(gpu_freqs," ");
     strcpy(gpu_available_freqs[0],freq_split);
     if(DEBUG_EN)ALOGI("gpu available freq[0]:%s\n",gpu_available_freqs[0]);
-    for(i=1;freq_split= strtok(NULL," ");i++){
+    for(i=1;freq_split=strtok(NULL," ");i++){
         strcpy(gpu_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("gpu available freq[%d]:%s\n",i,gpu_available_freqs[i]);
     }
+    gpu_max_index = i-1;
+    if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
 
 
 #ifdef DDR_BOOST_SUPPORT
@@ -282,10 +309,12 @@ static void rk_power_init(struct power_module *module)
     freq_split = strtok(ddr_freqs," ");
     strcpy(ddr_available_freqs[0],freq_split);
     if(DEBUG_EN)ALOGI("ddr available freq[0]:%s\n",ddr_available_freqs[0]);
-    for(i=1;freq_split= strtok(NULL," ");i++){
+    for(i=1;freq_split=strtok(NULL," ");i++){
         strcpy(ddr_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("ddr available freq[%d]:%s\n",i,ddr_available_freqs[i]);
     }
+    ddr_max_index = i-1;
+    if(DEBUG_EN)ALOGI("ddr_max_index:%d\n",ddr_max_index);
 #endif
 }
 
@@ -317,9 +346,9 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
     case POWER_HINT_VSYNC:
         break;
 
-    case POWER_HINT_VIDEO_DECODE:
+    case POWER_HINT_RKBOOST:
         if(data!=NULL) {
-            if(DEBUG_EN)ALOGI("POWER_HINT_VIDEO_DECODE Entered");
+            if(DEBUG_EN)ALOGI("POWER_HINT_RKBOOST Entered");
             /**********Custom data defination**********
              *mode & 0xF         : ddr min freq
              *(mode >> 4) & 0xF  : gpu min freq
