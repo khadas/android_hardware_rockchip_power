@@ -209,13 +209,6 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
     int mode = 0;
     switch (hint) {
     case POWER_HINT_INTERACTION:
-	 if(data != NULL) {
-            mode = *(int*)data;
-	    touch_boost(mode);
-	 } else {
-            mode = 0;
-	    touch_boost(mode);
-	 }
         break;
 
     case POWER_HINT_VSYNC:
