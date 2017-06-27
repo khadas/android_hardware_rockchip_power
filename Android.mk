@@ -63,4 +63,8 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3126c)
 LOCAL_SRC_FILES := power_rk312x.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3288)
+LOCAL_SRC_FILES := power_rk3288.c
+endif
+
 include $(BUILD_SHARED_LIBRARY)
