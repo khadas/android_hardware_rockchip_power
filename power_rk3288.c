@@ -48,7 +48,7 @@
 static bool low_power_mode = false;
 
 #define LOW_POWER_MAX_FREQ "126000"
-#define NORMAL_MAX_FREQ "1608000"
+#define NORMAL_MAX_FREQ "1800000"
 
 //#define TOUCHSCREEN_POWER_PATH "/devices/platform/ff160000.i2c/i2c-4/4-0040/input"
 
