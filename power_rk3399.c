@@ -63,10 +63,7 @@
 #define GPU_MAX_FREQ "/sys/class/devfreq/ff9a0000.gpu/max_freq"
 
 #ifdef DDR_BOOST_SUPPORT
-#define DDR_GOV_PATH "/sys/devices/platform/dmc/devfreq/dmc/governor"
-#define DDR_AVAIL_FREQ "/sys/devices/platform/dmc/devfreq/dmc/available_frequencies"
-#define DDR_MIN_FREQ "/sys/devices/platform/dmc/devfreq/dmc/min_freq"
-#define DDR_MAX_FREQ "/sys/devices/platform/dmc/devfreq/dmc/max_freq"
+#define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
 #endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
@@ -75,11 +72,6 @@ static char cpu_clust1_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int cpu_clust1_max_index = 0;
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int gpu_max_index = 0;
-
-#ifdef DDR_BOOST_SUPPORT
-static char ddr_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
-static unsigned int ddr_max_index = 0;
-#endif
 
 static void sysfs_write(char *path, char *s)
 {
@@ -162,30 +154,7 @@ static void gpu_boost(int max, int min)
     }
 }
 
-#ifdef DDR_BOOST_SUPPORT
-/*************** Modify ddr max && min freq for simple_ondemand mode **********************/
-static void ddr_boost(int max,int min)
-{
-    if(DEBUG_EN)ALOGI("RK ddr_boost Entered!");
-
-    if(max>=0 && max<=ddr_max_index && *ddr_available_freqs[max]>='0' && *ddr_available_freqs[max]<='9' ){
-        if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",max,ddr_available_freqs[max]);
-        sysfs_write(DDR_MAX_FREQ,ddr_available_freqs[max]);
-    } else {
-        ALOGE("Invalid max freq can not be set!");
-    }
-
-    if(min>=0 && min<=ddr_max_index && *ddr_available_freqs[min]>='0' && *ddr_available_freqs[min]<='9' ){
-        if(DEBUG_EN)ALOGI("ddr_available_freqs[%d]:%s",min,ddr_available_freqs[min]);
-        sysfs_write(DDR_MIN_FREQ,ddr_available_freqs[min]);
-    } else {
-        ALOGE("Invalid min freq can not be set!");
-    }
-}
-#endif
-
-/******** Current cpu gpu ddr available frequencies  *********/
-
+/******** touch bootst  *********/
 static void touch_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK touch_boost Entered!");
@@ -200,7 +169,7 @@ static void performance_boost(int on)
     sysfs_write(CPU_CLUST1_GOV_PATH, on ? "performance" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_GOV_PATH,on ? "performance" : "simple_ondemand");
+    sysfs_write(DDR_SCENE_PATH,on ? "p" : "n");
 #endif
 }
 
@@ -212,7 +181,7 @@ static void low_power_boost(int on)
     sysfs_write(CPU_CLUST1_GOV_PATH, on ? "powersave" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
 #endif
 }
 
@@ -224,9 +193,6 @@ static void rk_power_init(struct power_module *module)
     char cpu_clus0_freqs[BUFFER_LENGTH];
     char cpu_clus1_freqs[BUFFER_LENGTH];
     char gpu_freqs[BUFFER_LENGTH] ;
-#ifdef DDR_BOOST_SUPPORT
-    char ddr_freqs[BUFFER_LENGTH];
-#endif
     char*freq_split;
 
     /*********************** obtain cpu cluster0 available freqs **************************/
@@ -292,30 +258,6 @@ static void rk_power_init(struct power_module *module)
     }
     gpu_max_index = i-1;
     if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
-
-
-#ifdef DDR_BOOST_SUPPORT
-    /*********************** obtain ddr available freqs **************************/
-    if(fd = open (DDR_AVAIL_FREQ,O_RDONLY)){
-        count = read(fd,ddr_freqs,sizeof(ddr_freqs)-1);
-        if(count < 0) ALOGE("Error reading from %s\n", DDR_AVAIL_FREQ);
-        else
-            ddr_freqs[count] = '\0';
-    } else {
-        ALOGE("Error to open %s\n", DDR_AVAIL_FREQ);
-    }
-    if(DEBUG_EN)ALOGI("ddr_freqs:%s\n",ddr_freqs);
-
-    freq_split = strtok(ddr_freqs," ");
-    strcpy(ddr_available_freqs[0],freq_split);
-    if(DEBUG_EN)ALOGI("ddr available freq[0]:%s\n",ddr_available_freqs[0]);
-    for(i=1;freq_split=strtok(NULL," ");i++){
-        strcpy(ddr_available_freqs[i],freq_split);
-        if(DEBUG_EN)ALOGI("ddr available freq[%d]:%s\n",i,ddr_available_freqs[i]);
-    }
-    ddr_max_index = i-1;
-    if(DEBUG_EN)ALOGI("ddr_max_index:%d\n",ddr_max_index);
-#endif
 }
 
 /*performs power management actions upon the
@@ -346,25 +288,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
     case POWER_HINT_VSYNC:
         break;
 
-    case POWER_HINT_RKBOOST:
-        if(data!=NULL) {
-            if(DEBUG_EN)ALOGI("POWER_HINT_RKBOOST Entered");
-            /**********Custom data defination**********
-             *mode & 0xF         : ddr min freq
-             *(mode >> 4) & 0xF  : gpu min freq
-             *(mode >> 8) & 0xF  : cpu clus1 min freq
-             *(mode >> 12) & 0xF : cpu clus0 min freq
-             *(mode >> 16) & 0xF : ddr max freq
-             *(mode >> 20) & 0xF : gpu max freq
-             *(mode >> 24) & 0xF : cpu clus1 max freq
-             *(mode >> 28) & 0xF : cpu clus0 max freq
-             */
-            mode = *(int*)data;
-            if(DEBUG_EN)ALOGI("mode:%x",mode);
-#ifdef DDR_BOOST_SUPPORT
-            ddr_boost( (mode >> 16) & 0xF , mode & 0xF);
-#endif
-        }
+    case POWER_HINT_VIDEO_DECODE:
         break;
 
     case POWER_HINT_LOW_POWER:
@@ -383,6 +307,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
             performance_boost(mode);
         }
         break;
+
     case POWER_HINT_PERFORMANCE:
         if(data!=NULL) {
             mode = *(int*)data;
