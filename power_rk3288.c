@@ -231,9 +231,9 @@ static void rk_power_set_interactive(struct power_module *module, int on)
      */
     sysfs_write(CPU_MAX_FREQ_PATH,
                 (!on || low_power_mode) ? LOW_POWER_MAX_FREQ : NORMAL_MAX_FREQ);
-    sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
-    sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
-    sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
+    //sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
+    //sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
+    //sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
     //sysfs_write(TOUCHSCREEN_POWER_PATH, on ? "1" : "0");
     if(DEBUG_EN)ALOGD("power_set_interactive: %d done\n", on);
 }
