@@ -274,11 +274,11 @@ static void rk_power_set_interactive(struct power_module *module, int on)
     sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
-    */
     sysfs_write("/sys/devices/system/cpu/cpu4/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu5/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu6/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu7/online", on ? "1" : "0");
+    */
 }
 
 /*
