@@ -41,23 +41,37 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
+#define DDR_BOOST_SUPPORT 1
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
 
-#define CPU_CLUST0_GOV_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
-#define CPU_CLUST0_AVAIL_FREQ "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies"
-#define CPU_CLUST0_SCAL_MAX_FREQ "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
-#define CPU_CLUST0_SCAL_MIN_FREQ "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
-#define CPU_CLUST0_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/interactive/boostpulse"
+static bool low_power_mode = false;
 
-#define GPU_AVAIL_FREQ "/sys/devices/10091000.gpu/available_frequencies"
-#define GPU_FREQ_CLK   "/sys/devices/10091000.gpu/clock"
-#define GPU_GOV_ENABLE "/sys/devices/10091000.gpu/dvfs_enable"
+#define LOW_POWER_MAX_FREQ "126000"
+#define NORMAL_MAX_FREQ "1800000"
 
-#define DDR_GOV_ENABLE "/dev/video_state"
+//#define TOUCHSCREEN_POWER_PATH "/devices/platform/ff160000.i2c/i2c-4/4-0040/input"
+
+#define CPU_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
+#define CPU_CLUST0_GOV_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_governor"
+#define CPU_CLUST0_AVAIL_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies"
+#define CPU_CLUST0_SCAL_MAX_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq"
+#define CPU_CLUST0_SCAL_MIN_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq"
+#define CPU_CLUST0_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/policy0/interactive/boostpulse"
+
+#define GPU_GOV_PATH "/sys/class/devfreq/10091000.gpu/governor"
+#define GPU_AVAIL_FREQ "/sys/class/devfreq/10091000.gpu/available_frequencies"
+#define GPU_MIN_FREQ "/sys/class/devfreq/10091000.gpu/min_freq"
+#define GPU_MAX_FREQ "/sys/class/devfreq/10091000.gpu/max_freq"
+
+#ifdef DDR_BOOST_SUPPORT
+#define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
+#endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int cpu_clust0_max_index = 0;
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
+static unsigned int gpu_max_index = 0;
 
 static void sysfs_write(char *path, char *s)
 {
@@ -84,68 +98,82 @@ static void sysfs_write(char *path, char *s)
 static void cpu_clus0_boost(int max, int min )
 {
     if(DEBUG_EN)ALOGI("RK cpu_clus0_boost Entered!");
-    if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",max,cpu_clust0_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",min,cpu_clust0_available_freqs[min]);
-    if( *cpu_clust0_available_freqs[max]>='0' && *cpu_clust0_available_freqs[max]<='9' )
-        sysfs_write(CPU_CLUST0_SCAL_MAX_FREQ,cpu_clust0_available_freqs[max]);
-    else
-        ALOGE("Invalid max freq can not be set!");
-    if( *cpu_clust0_available_freqs[min]>='0' && *cpu_clust0_available_freqs[min]<='9' )
-        sysfs_write(CPU_CLUST0_SCAL_MIN_FREQ,cpu_clust0_available_freqs[min]);
-    else
-        ALOGE("Invalid min freq can not be set!");
-}
 
+    if(max>=0 && max<=cpu_clust0_max_index && *cpu_clust0_available_freqs[max]>='0' && *cpu_clust0_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",max,cpu_clust0_available_freqs[max]);
+        sysfs_write(CPU_CLUST0_SCAL_MAX_FREQ,cpu_clust0_available_freqs[max]);
+    } else {
+        ALOGE("Invalid max freq can not be set!");
+    }
+
+    if(min>=0 && min<=cpu_clust0_max_index && *cpu_clust0_available_freqs[min]>='0' && *cpu_clust0_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("cpu_clust0_available_freqs[%d]:%s",min,cpu_clust0_available_freqs[min]);
+        sysfs_write(CPU_CLUST0_SCAL_MIN_FREQ,cpu_clust0_available_freqs[min]);
+    } else {
+        ALOGE("Invalid min freq can not be set!");
+    }
+}
 
 /*************** Modify gpu max && min freq for simple_ondemand mode **********************/
 static void gpu_boost(int max, int min)
 {
     if(DEBUG_EN)ALOGI("RK gpu_boost Entered!");
-    if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",max,gpu_available_freqs[max]);
-    if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",min,gpu_available_freqs[min]);
-    sysfs_write(GPU_GOV_ENABLE, "0");
-    sysfs_write(GPU_FREQ_CLK, "480000000");
-}
 
+    if(max>=0 && max<=gpu_max_index && *gpu_available_freqs[max]>='0' && *gpu_available_freqs[max]<='9' ){
+        if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",max,gpu_available_freqs[max]);
+        sysfs_write(GPU_MAX_FREQ,gpu_available_freqs[max]);
+    } else {
+        ALOGE("Invalid max freq can not be set!");
+    }
+
+    if(min>=0 && min<=gpu_max_index && *gpu_available_freqs[min]>='0' && *gpu_available_freqs[min]<='9' ){
+        if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",min,gpu_available_freqs[min]);
+        sysfs_write(GPU_MIN_FREQ,gpu_available_freqs[min]);
+    } else {
+        ALOGE("Invalid min freq can not be set!");
+    }
+}
 
 /******** touch bootst  *********/
 static void touch_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK touch_boost Entered!");
-
-    // improve ddr freq
-    sysfs_write(DDR_GOV_ENABLE, on ? "n" : "p");
+    //sysfs_write(CPU_CLUST0_BOOSTPULSE_PATH, on ? "1" : "0");
 }
 
-/************** Modify cpu gpu to performance mode ************************/
+/************** Modify cpu gpu ddr to performance mode ************************/
 static void performance_boost(int on)
 {
-    if(DEBUG_EN)ALOGI("RK performance_boost Entered!");
-
+    if(DEBUG_EN)ALOGI("RK performance_boost, on=%d", on);
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "performance" : "interactive");
-    sysfs_write(GPU_GOV_ENABLE, on ? "0" : "1");
-    sysfs_write(GPU_FREQ_CLK, on ? "480000000" : "200000000");
-    sysfs_write(DDR_GOV_ENABLE, on ? "p" : "n");
+    sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
+#ifdef DDR_BOOST_SUPPORT
+    sysfs_write(DDR_SCENE_PATH,on ? "p" : "n");
+#endif
 }
 
-/************** Modify cpu gpu to powersave mode ************************/
+/************** Modify cpu gpu ddr to powersave mode ************************/
 static void low_power_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK low_power_boost Entered!");
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
+    sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+#ifdef DDR_BOOST_SUPPORT
+    sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
+#endif
 }
 
 static void rk_power_init(struct power_module *module)
 {
-    if(DEBUG_EN)ALOGD("version 4.0\n");
+    if(DEBUG_EN)ALOGD("rk3288: power hal version 4.0\n");
 
-    int   fd, count, i=0;
-    char  cpu_clus0_freqs[BUFFER_LENGTH];
-    char  gpu_freqs[BUFFER_LENGTH] ;
-    char* freq_split;
+    int fd,count,i=0;
+    char cpu_clus0_freqs[BUFFER_LENGTH];
+    char gpu_freqs[BUFFER_LENGTH] ;
+    char*freq_split;
 
     /*********************** obtain cpu cluster0 available freqs **************************/
-    if (fd = open(CPU_CLUST0_AVAIL_FREQ,O_RDONLY)) {
+    if(fd = open (CPU_CLUST0_AVAIL_FREQ,O_RDONLY)){
         count = read(fd,cpu_clus0_freqs,sizeof(cpu_clus0_freqs)-1);
         if(count < 0) ALOGE("Error reading from %s\n", CPU_CLUST0_AVAIL_FREQ);
         else
@@ -156,35 +184,35 @@ static void rk_power_init(struct power_module *module)
     if(DEBUG_EN)ALOGI("cpu_clus0_freqs:%s\n",cpu_clus0_freqs);
 
     freq_split = strtok(cpu_clus0_freqs," ");
-    strcpy(cpu_clust0_available_freqs[0], freq_split);
-
-    if(DEBUG_EN)ALOGI("cpu_clust0 available freq[0]:%s\n", cpu_clust0_available_freqs[0]);
-
-    for (i = 1; freq_split = strtok(NULL, " "); i++) {
-        strcpy(cpu_clust0_available_freqs[i], freq_split);
-        if(DEBUG_EN) ALOGI("cpu_clust0 available freq[%d]:%s\n", i, cpu_clust0_available_freqs[i]);
+    strcpy(cpu_clust0_available_freqs[0],freq_split);
+    if(DEBUG_EN)ALOGI("cpu_clust0 available freq[0]:%s\n",cpu_clust0_available_freqs[0]);
+    for(i=1;freq_split=strtok(NULL," ");i++){
+        strcpy(cpu_clust0_available_freqs[i],freq_split);
+        if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
     }
+    cpu_clust0_max_index = i-2;
+    if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
 
     /*********************** obtain gpu available freqs **************************/
-    if (fd = open(GPU_AVAIL_FREQ, O_RDONLY)) {
-        count = read(fd, gpu_freqs, sizeof(gpu_freqs)-1);
+    if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
+        count = read(fd,gpu_freqs,sizeof(gpu_freqs)-1);
         if(count < 0) ALOGE("Error reading from %s\n", GPU_AVAIL_FREQ);
         else
             gpu_freqs[count] = '\0';
     } else {
         ALOGE("Error to open %s\n", GPU_AVAIL_FREQ);
     }
+    if(DEBUG_EN)ALOGI("gpu_freqs:%s\n",gpu_freqs);
 
-    if(DEBUG_EN)ALOGI("gpu_freqs:%s\n", gpu_freqs);
-
-    freq_split = strtok(gpu_freqs, "\n");
-    strcpy(gpu_available_freqs[0], freq_split);
-    if(DEBUG_EN)ALOGI("gpu available freq[0]:%s\n", gpu_available_freqs[0]);
-
-    for(i = 1; freq_split = strtok(NULL, "\n"); i++) {
-        strcpy(gpu_available_freqs[i], freq_split);
-        if(DEBUG_EN) ALOGI("gpu available freq[%d]:%s\n", i, gpu_available_freqs[i]);
+    freq_split = strtok(gpu_freqs," ");
+    strcpy(gpu_available_freqs[0],freq_split);
+    if(DEBUG_EN)ALOGI("gpu available freq[0]:%s\n",gpu_available_freqs[0]);
+    for(i=1;freq_split=strtok(NULL," ");i++){
+        strcpy(gpu_available_freqs[i],freq_split);
+        if(DEBUG_EN)ALOGI("gpu available freq[%d]:%s\n",i,gpu_available_freqs[i]);
     }
+    gpu_max_index = i-1;
+    if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
 }
 
 /*performs power management actions upon the
@@ -195,7 +223,19 @@ static void rk_power_init(struct power_module *module)
  */
 static void rk_power_set_interactive(struct power_module *module, int on)
 {
+    /*************Add appropriate actions for specific platform && product type *****************/
+    if(DEBUG_EN)ALOGD("power_set_interactive: %d\n", on);
 
+    /*
+     * Lower maximum frequency when screen is off.
+     */
+    sysfs_write(CPU_MAX_FREQ_PATH,
+                (!on || low_power_mode) ? LOW_POWER_MAX_FREQ : NORMAL_MAX_FREQ);
+    //sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
+    //sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
+    //sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
+    //sysfs_write(TOUCHSCREEN_POWER_PATH, on ? "1" : "0");
+    if(DEBUG_EN)ALOGD("power_set_interactive: %d done\n", on);
 }
 
 /*
@@ -209,6 +249,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
     int mode = 0;
     switch (hint) {
     case POWER_HINT_INTERACTION:
+        //touch_boost(mode);
         break;
 
     case POWER_HINT_VSYNC:
@@ -225,7 +266,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
         break;
 
     case POWER_HINT_SUSTAINED_PERFORMANCE:
-        if(data != NULL) {
+        if(data!=NULL) {
             mode = *(int*)data;
             performance_boost(mode);
         } else {
@@ -234,7 +275,7 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
         }
         break;
     case POWER_HINT_PERFORMANCE:
-        if(data != NULL) {
+        if(data!=NULL) {
             mode = *(int*)data;
             performance_boost(mode);
         } else {
@@ -268,3 +309,4 @@ struct power_module HAL_MODULE_INFO_SYM = {
     setInteractive: rk_power_set_interactive,
     powerHint: rk_power_hint,
 };
+
