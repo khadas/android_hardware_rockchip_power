@@ -48,7 +48,7 @@
 static bool low_power_mode = false;
 
 #define LOW_POWER_MAX_FREQ "126000"
-#define NORMAL_MAX_FREQ "1800000"
+#define NORMAL_MAX_FREQ "1200000"
 
 //#define TOUCHSCREEN_POWER_PATH "/devices/platform/ff160000.i2c/i2c-4/4-0040/input"
 
@@ -58,6 +58,7 @@ static bool low_power_mode = false;
 #define CPU_CLUST0_SCAL_MAX_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq"
 #define CPU_CLUST0_SCAL_MIN_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_min_freq"
 #define CPU_CLUST0_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/policy0/interactive/boostpulse"
+#define CPU_CLUST0_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq"
 
 #define GPU_GOV_PATH "/sys/class/devfreq/10091000.gpu/governor"
 #define GPU_AVAIL_FREQ "/sys/class/devfreq/10091000.gpu/available_frequencies"
@@ -165,7 +166,7 @@ static void low_power_boost(int on)
 
 static void rk_power_init(struct power_module *module)
 {
-    if(DEBUG_EN)ALOGD("rk3288: power hal version 4.0\n");
+    if(DEBUG_EN)ALOGD("rk3126c: power hal version 4.0\n");
 
     int fd,count,i=0;
     char cpu_clus0_freqs[BUFFER_LENGTH];
@@ -192,7 +193,8 @@ static void rk_power_init(struct power_module *module)
     }
     cpu_clust0_max_index = i-2;
     if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
-
+    
+    sysfs_write(CPU_CLUST0_HISPEED_FREQ_PATH,"600000");
     /*********************** obtain gpu available freqs **************************/
     if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
         count = read(fd,gpu_freqs,sizeof(gpu_freqs)-1);
