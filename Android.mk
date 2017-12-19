@@ -81,4 +81,8 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3328)
 LOCAL_SRC_FILES := power_rk3328.c
 endif
 
+ifeq ($(strip $(PRODUCT_BUILD_MODULE)),px5car)
+LOCAL_CFLAGS += -DRK3368_PX5CAR
+endif
+
 include $(BUILD_SHARED_LIBRARY)

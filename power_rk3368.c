@@ -62,6 +62,11 @@
 #define GPU_MIN_FREQ "/sys/class/devfreq/ffa30000.rogue-g6110/min_freq"
 #define GPU_MAX_FREQ "/sys/class/devfreq/ffa30000.rogue-g6110/max_freq"
 
+#ifdef RK3368_PX5CAR
+#define THERMAL_ZONE0_POLICY "sys/class/thermal/thermal_zone0/policy"
+#define THERMAL_ZONE1_POLICY "sys/class/thermal/thermal_zone1/policy"
+#endif
+
 #ifdef DDR_BOOST_SUPPORT
 #define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
 #endif
@@ -170,6 +175,11 @@ static void performance_boost(int on)
     sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
     sysfs_write(DDR_SCENE_PATH,on ? "p" : "n");
+#endif
+
+#ifdef RK3368_PX5CAR
+	sysfs_write(THERMAL_ZONE0_POLICY, on ? "power_allocator" : "step_wise");
+	sysfs_write(THERMAL_ZONE1_POLICY, on ? "power_allocator" : "step_wise");
 #endif
 }
 
