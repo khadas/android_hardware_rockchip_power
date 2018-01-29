@@ -64,6 +64,10 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3368)
 LOCAL_SRC_FILES := power_rk3368.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3326)
+LOCAL_SRC_FILES := power_rk3326.c
+endif
+
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3126c)
 LOCAL_SRC_FILES := power_rk312x.c
 endif
