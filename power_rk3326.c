@@ -43,7 +43,7 @@
 
 #define DDR_BOOST_SUPPORT 1
 #define BUFFER_LENGTH 128
-#define FREQ_LENGTH 10
+#define FREQ_LENGTH 16
 
 static bool low_power_mode = false;
 
@@ -176,10 +176,15 @@ static void rk_power_init(struct power_module *module)
     /*********************** obtain cpu cluster0 available freqs **************************/
     if(fd = open (CPU_CLUST0_AVAIL_FREQ,O_RDONLY)){
         count = read(fd,cpu_clus0_freqs,sizeof(cpu_clus0_freqs)-1);
-        if(count < 0) ALOGE("Error reading from %s\n", CPU_CLUST0_AVAIL_FREQ);
-        else
+        if(count < 0){
+			cpu_clus0_freqs[0] = '0';
+			cpu_clus0_freqs[1] = '\0';
+			ALOGE("Error reading from %s\n", CPU_CLUST0_AVAIL_FREQ);
+		} else
             cpu_clus0_freqs[count] = '\0';
     } else {
+		cpu_clus0_freqs[0] = '0';
+		cpu_clus0_freqs[1] = '\0';
         ALOGE("Error to open %s\n", CPU_CLUST0_AVAIL_FREQ);
     }
     if(DEBUG_EN)ALOGI("cpu_clus0_freqs:%s\n",cpu_clus0_freqs);
