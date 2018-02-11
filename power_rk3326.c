@@ -34,7 +34,7 @@
 #include <fcntl.h>
 
 #define LOG_TAG "RKPowerHAL"
-#define DEBUG_EN 1
+#define DEBUG_EN 0
 #include <utils/Log.h>
 #include <cutils/properties.h>
 
@@ -47,8 +47,8 @@
 
 static bool low_power_mode = false;
 
-#define LOW_POWER_MAX_FREQ "126000"
-#define NORMAL_MAX_FREQ "1200000"
+#define LOW_POWER_MAX_FREQ "600000"
+#define NORMAL_MAX_FREQ "1296000"
 
 //#define TOUCHSCREEN_POWER_PATH "/devices/platform/ff160000.i2c/i2c-4/4-0040/input"
 
@@ -196,7 +196,7 @@ static void rk_power_init(struct power_module *module)
         strcpy(cpu_clust0_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
     }
-    cpu_clust0_max_index = i-2;
+    cpu_clust0_max_index = i-1;
     if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
     
     sysfs_write(CPU_CLUST0_HISPEED_FREQ_PATH,"600000");
