@@ -47,8 +47,8 @@
 
 static bool low_power_mode = false;
 
-#define LOW_POWER_MAX_FREQ "600000"
-#define NORMAL_MAX_FREQ "1296000"
+#define LOW_POWER_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index/2]
+#define NORMAL_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index]
 
 //#define TOUCHSCREEN_POWER_PATH "/devices/platform/ff160000.i2c/i2c-4/4-0040/input"
 
@@ -157,8 +157,9 @@ static void performance_boost(int on)
 static void low_power_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK low_power_boost Entered!");
-    sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
-    sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    //sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
+    //sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    low_power_mode = on;
 #ifdef DDR_BOOST_SUPPORT
     sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
 #endif
@@ -196,7 +197,7 @@ static void rk_power_init(struct power_module *module)
         strcpy(cpu_clust0_available_freqs[i],freq_split);
         if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
     }
-    cpu_clust0_max_index = i-1;
+    cpu_clust0_max_index = i-2;
     if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
     
     sysfs_write(CPU_CLUST0_HISPEED_FREQ_PATH,"600000");
@@ -259,48 +260,39 @@ static void rk_power_set_interactive(struct power_module *module, int on)
  */
 static void rk_power_hint(struct power_module *module, power_hint_t hint, void *data)
 {
-    /*************Add appropriate actions for specific platform && product type *****************/
-    int mode = 0;
+    /*************Add appropriate actions for specific platform && product type *****************
+     * When the incoming parameter is 0, the 'data' will be lost.
+     **/
+    int mode = data!=NULL?*(int*)data:0;
+
     switch (hint) {
-    case POWER_HINT_INTERACTION:
-        //touch_boost(mode);
-        break;
+        case POWER_HINT_INTERACTION:
+            //touch_boost(mode);
+            break;
 
-    case POWER_HINT_VSYNC:
-        break;
+        case POWER_HINT_VSYNC:
+            break;
 
-    case POWER_HINT_VIDEO_DECODE:
-        break;
+        case POWER_HINT_VIDEO_DECODE:
+            break;
 
-    case POWER_HINT_LOW_POWER:
-        /*if(data!=NULL) {
-            mode = *(int*)data;
+        case POWER_HINT_LOW_POWER:
             low_power_boost(mode);
-        }*/
-        break;
+            break;
 
-    case POWER_HINT_SUSTAINED_PERFORMANCE:
-        if(data!=NULL) {
-            mode = *(int*)data;
+        case POWER_HINT_SUSTAINED_PERFORMANCE:
             performance_boost(mode);
-        } else {
-            mode = 0;
+            break;
+
+        case POWER_HINT_PERFORMANCE:
             performance_boost(mode);
-        }
-        break;
-    case POWER_HINT_PERFORMANCE:
-        if(data!=NULL) {
-            mode = *(int*)data;
-            performance_boost(mode);
-        } else {
-            mode = 0;
-            performance_boost(mode);
-        }
-        break;
-    case POWER_HINT_VR_MODE:
-        break;
-    default:
-        break;
+            break;
+
+        case POWER_HINT_VR_MODE:
+            break;
+
+        default:
+            break;
     }
 }
 
