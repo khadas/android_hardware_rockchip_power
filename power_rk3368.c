@@ -45,6 +45,12 @@
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
 
+static bool low_power_mode = false;
+
+#define LOW_POWER_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index/2]
+#define NORMAL_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index]
+
+#define CPU_MAX_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 #define CPU_CLUST0_GOV_PATH "/sys/devices/system/cpu/cpufreq/policy0/scaling_governor"
 #define CPU_CLUST0_AVAIL_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_available_frequencies"
 #define CPU_CLUST0_SCAL_MAX_FREQ "/sys/devices/system/cpu/cpufreq/policy0/scaling_max_freq"
@@ -187,9 +193,10 @@ static void performance_boost(int on)
 static void low_power_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK low_power_boost Entered!");
-    sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
-    sysfs_write(CPU_CLUST1_GOV_PATH, on ? "powersave" : "interactive");
-    sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    //sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
+    //sysfs_write(CPU_CLUST1_GOV_PATH, on ? "powersave" : "interactive");
+    //sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    low_power_mode = on;
 #ifdef DDR_BOOST_SUPPORT
     sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
 #endif
@@ -279,7 +286,8 @@ static void rk_power_init(struct power_module *module)
 static void rk_power_set_interactive(struct power_module *module, int on)
 {
     /*************Add appropriate actions for specific platform && product type *****************/
-    sysfs_write("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq", on ? "1200000" : "816000");
+    sysfs_write(CPU_MAX_FREQ_PATH,
+                (!on || low_power_mode) ? LOW_POWER_MAX_FREQ : NORMAL_MAX_FREQ);
     /*
     sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
     sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
@@ -298,49 +306,39 @@ static void rk_power_set_interactive(struct power_module *module, int on)
  */
 static void rk_power_hint(struct power_module *module, power_hint_t hint, void *data)
 {
-    /*************Add appropriate actions for specific platform && product type *****************/
-    int mode = 0;
+    /*************Add appropriate actions for specific platform && product type ****************
+    * When the incoming parameter is 0, the 'data' will be lost.
+    **/
+    int mode = data!=NULL?*(int*)data:0;
+
     switch (hint) {
-    case POWER_HINT_INTERACTION:
-        //touch_boost(mode);
-        break;
+        case POWER_HINT_INTERACTION:
+            //touch_boost(mode);
+            break;
 
-    case POWER_HINT_VSYNC:
-        break;
+        case POWER_HINT_VSYNC:
+            break;
 
-    case POWER_HINT_VIDEO_DECODE:
-        break;
+        case POWER_HINT_VIDEO_DECODE:
+            break;
 
-    case POWER_HINT_LOW_POWER:
-        /*if(data!=NULL) {
-            mode = *(int*)data;
+        case POWER_HINT_LOW_POWER:
             low_power_boost(mode);
-        }*/
-        break;
+            break;
 
-    case POWER_HINT_SUSTAINED_PERFORMANCE:
-        if(data!=NULL) {
-            mode = *(int*)data;
+        case POWER_HINT_SUSTAINED_PERFORMANCE:
             performance_boost(mode);
-        } else {
-            mode = 0;
-            performance_boost(mode);
-        }
-        break;
+            break;
 
-    case POWER_HINT_PERFORMANCE:
-        if(data!=NULL) {
-            mode = *(int*)data;
+        case POWER_HINT_PERFORMANCE:
             performance_boost(mode);
-        } else {
-            mode = 0;
-            performance_boost(mode);
-        }
-        break;
-    case POWER_HINT_VR_MODE:
-        break;
-    default:
-        break;
+            break;
+
+        case POWER_HINT_VR_MODE:
+            break;
+
+        default:
+            break;
     }
 }
 
