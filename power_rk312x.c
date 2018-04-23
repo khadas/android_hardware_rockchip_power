@@ -28,13 +28,14 @@
  */
 
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #define LOG_TAG "RKPowerHAL"
-#define DEBUG_EN 1
+#define DEBUG_EN 0
 #include <utils/Log.h>
 #include <cutils/properties.h>
 
@@ -73,6 +74,7 @@ static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int cpu_clust0_max_index = 0;
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int gpu_max_index = 0;
+static char propbuf[256];
 
 static void sysfs_write(char *path, char *s)
 {
@@ -133,6 +135,24 @@ static void gpu_boost(int max, int min)
     } else {
         ALOGE("Invalid min freq can not be set!");
     }
+}
+
+static bool is_cts_boost_scene()
+{
+    FILE *fp;
+    char result[32];
+    fp=fopen("/metadata/view_cts.ini","r");
+    if(!fp) {
+        ALOGE("fp is null");
+        return false;
+    }
+    while(memset(result, 0, sizeof(result)),fgets(result,sizeof(result),fp)){
+        if(DEBUG_EN)ALOGI("result:%s",result);
+        if(!strncmp(result,"is_auto_fill=1",14))
+            return true;
+    }
+    fclose(fp);
+    return false;
 }
 
 /******** touch bootst  *********/
@@ -255,6 +275,14 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
 
     switch (hint) {
         case POWER_HINT_INTERACTION:
+            property_get("ro.build.fingerprint", propbuf, NULL);
+            if(DEBUG_EN)ALOGI("propbuf:%s",propbuf);
+            if(strstr(propbuf,"generic_arm")) {
+                if(is_cts_boost_scene())
+                    performance_boost(1);
+                else
+                    performance_boost(0);
+            }
             //touch_boost(mode);
             break;
 
