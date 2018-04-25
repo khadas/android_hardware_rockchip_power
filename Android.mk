@@ -79,7 +79,9 @@ endif
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk322x)
 LOCAL_SRC_FILES := power_rk322x.c
 endif
-
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3128h)
+LOCAL_SRC_FILES := power_rk322x.c
+endif
 #TODO
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3328)
 LOCAL_SRC_FILES := power_rk3328.c
