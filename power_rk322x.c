@@ -40,7 +40,7 @@
 
 #include <hardware/hardware.h>
 #include <hardware/power.h>
-
+#include <dlfcn.h>
 #define DDR_BOOST_SUPPORT 1
 #define BUFFER_LENGTH 128
 #define FREQ_LENGTH 10
@@ -94,6 +94,26 @@ static void sysfs_write(char *path, char *s)
     }
 
     close(fd);
+}
+
+typedef int32_t (*InitPlayerPower)();
+void init_video_power()
+{
+    void* handle = dlopen("/system/lib/librkffplayer.so", RTLD_NOW);
+    if (handle == NULL) {
+        handle = dlopen("/vendor/lib/librkffplayer.so", RTLD_NOW);
+        if (handle == NULL)
+            return ;
+    }
+
+    InitPlayerPower initPlayerPower = (InitPlayerPower)dlsym(handle, "player_ext_init");
+    if (initPlayerPower == NULL) {
+        dlclose(handle);
+        return ;
+    }
+    if(DEBUG_EN)ALOGD("init_video_power\n");
+    initPlayerPower();
+    dlclose(handle);
 }
 
 /*************** Modify cpu clust0 scaling max && min freq for interactive mode **********************/
@@ -168,7 +188,7 @@ static void low_power_boost(int on)
 static void rk_power_init(struct power_module *module)
 {
     if(DEBUG_EN)ALOGD("rk322x: power hal version 4.0\n");
-
+    init_video_power();
     int fd,count,i=0;
     char cpu_clus0_freqs[BUFFER_LENGTH];
     char gpu_freqs[BUFFER_LENGTH] ;
