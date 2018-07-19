@@ -284,13 +284,6 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
             performance_boost(mode);
             break;
 
-        case POWER_HINT_PERFORMANCE:
-            performance_boost(mode);
-            break;
-
-        case POWER_HINT_VR_MODE:
-            break;
-
         default:
             break;
     }
