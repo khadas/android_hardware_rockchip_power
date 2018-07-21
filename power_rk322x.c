@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #define LOG_TAG "RKPowerHAL"
 #define DEBUG_EN 1
@@ -117,7 +118,7 @@ void init_video_power()
 }
 
 /*************** Modify cpu clust0 scaling max && min freq for interactive mode **********************/
-static void cpu_clus0_boost(int max, int min )
+static void cpu_clus0_boost(unsigned int max, unsigned int min )
 {
     if(DEBUG_EN)ALOGI("RK cpu_clus0_boost Entered!");
 
@@ -137,7 +138,7 @@ static void cpu_clus0_boost(int max, int min )
 }
 
 /*************** Modify gpu max && min freq for simple_ondemand mode **********************/
-static void gpu_boost(int max, int min)
+static void gpu_boost(unsigned int max, unsigned int min)
 {
     if(DEBUG_EN)ALOGI("RK gpu_boost Entered!");
 
@@ -159,7 +160,7 @@ static void gpu_boost(int max, int min)
 /******** touch bootst  *********/
 static void touch_boost(int on)
 {
-    if(DEBUG_EN)ALOGI("RK touch_boost Entered!");
+    if(DEBUG_EN)ALOGI("RK touch_boost Entered:%d", on);
     //sysfs_write(CPU_CLUST0_BOOSTPULSE_PATH, on ? "1" : "0");
 }
 
@@ -318,18 +319,18 @@ static struct hw_module_methods_t power_module_methods = {
 };
 
 struct power_module HAL_MODULE_INFO_SYM = {
-    common: {
-        tag: HARDWARE_MODULE_TAG,
-        module_api_version: POWER_MODULE_API_VERSION_0_5,
-        hal_api_version: HARDWARE_HAL_API_VERSION,
-        id: POWER_HARDWARE_MODULE_ID,
-        name: TARGET_BOARD_PLATFORM " Power HAL",
-        author: "Rockchip",
-        methods: &power_module_methods,
+    .common = {
+        .tag = HARDWARE_MODULE_TAG,
+        .module_api_version = POWER_MODULE_API_VERSION_0_5,
+        .hal_api_version = HARDWARE_HAL_API_VERSION,
+        .id = POWER_HARDWARE_MODULE_ID,
+        .name = TARGET_BOARD_PLATFORM " Power HAL",
+        .author = "Rockchip",
+        .methods = &power_module_methods,
     },
 
-    init: rk_power_init,
-    setInteractive: rk_power_set_interactive,
-    powerHint: rk_power_hint,
+    .init = rk_power_init,
+    .setInteractive = rk_power_set_interactive,
+    .powerHint = rk_power_hint,
 };
 

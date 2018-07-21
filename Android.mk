@@ -43,7 +43,7 @@ endif
 LOCAL_MODULE_RELATIVE_PATH := hw
 endif
 LOCAL_CFLAGS += -Wno-error
-LOCAL_SHARED_LIBRARIES := liblog libcutils
+LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := power.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
