@@ -47,8 +47,8 @@
 #include <hardware/hardware.h>
 #include <hardware/power.h>
 
-#define BUFFER_LENGTH 128
-#define FREQ_LENGTH 10
+#define BUFFER_LENGTH 256
+#define FREQ_LENGTH 16
 
 #define CPU_CLUST0_GOV_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
 #define CPU_CLUST0_AVAIL_FREQ "/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_frequencies"

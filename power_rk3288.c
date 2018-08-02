@@ -48,8 +48,8 @@
 #include <hardware/power.h>
 
 #define DDR_BOOST_SUPPORT 1
-#define BUFFER_LENGTH 128
-#define FREQ_LENGTH 10
+#define BUFFER_LENGTH 256
+#define FREQ_LENGTH 16
 
 static bool low_power_mode = false;
 
