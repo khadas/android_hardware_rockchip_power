@@ -100,12 +100,9 @@ static void sysfs_write(char *path, char *s)
 typedef int32_t (*InitPlayerPower)();
 void init_video_power()
 {
-    void* handle = dlopen("/system/lib/librkffplayer.so", RTLD_NOW);
-    if (handle == NULL) {
-        handle = dlopen("/vendor/lib/librkffplayer.so", RTLD_NOW);
+    void* handle = dlopen("/vendor/lib/libavvin.so", RTLD_NOW);
         if (handle == NULL)
             return ;
-    }
 
     InitPlayerPower initPlayerPower = (InitPlayerPower)dlsym(handle, "player_ext_init");
     if (initPlayerPower == NULL) {

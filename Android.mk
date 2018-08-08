@@ -32,6 +32,17 @@ LOCAL_PATH := $(call my-dir)
 
 # HAL module implemenation stored in
 # hw/<POWERS_HARDWARE_MODULE_ID>.<ro.board.platform>.so
+ifneq ($(filter rk3128h rk322x, $(strip $(TARGET_BOARD_PLATFORM))), )
+include $(CLEAR_VARS)
+LOCAL_MODULE_SUFFIX := .so
+LOCAL_MODULE := libavvin
+LOCAL_PROPRIETARY_MODULE := true
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_SRC_FILES := libavvin.so
+OVERRIDE_BUILT_MODULE_PATH := $(TARGET_OUT_INTERMEDIATE_LIBRARIES)
+include $(BUILD_PREBUILT)
+endif
+
 include $(CLEAR_VARS)
 
 ifneq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 5.0)))
@@ -80,12 +91,11 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3288)
 LOCAL_SRC_FILES := power_rk3288.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk322x)
+ifneq ($(filter rk3128h rk322x, $(strip $(TARGET_BOARD_PLATFORM))), )
+LOCAL_SHARED_LIBRARIES += libavvin
 LOCAL_SRC_FILES := power_rk322x.c
 endif
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3128h)
-LOCAL_SRC_FILES := power_rk322x.c
-endif
+
 #TODO
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3328)
 LOCAL_SRC_FILES := power_rk3328.c
