@@ -71,7 +71,7 @@ ifeq ($(strip $(BOARD_DDR_VAR_ENABLED)),true)
 LOCAL_CFLAGS += -DDDR_BOOST_SUPPORT=1
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk3399)
+ifneq ($(filter rk3399 rk3399pro, $(strip $(TARGET_BOARD_PLATFORM))), )
 LOCAL_SRC_FILES := power_rk3399.c
 endif
 
