@@ -48,6 +48,9 @@
 
 static bool low_power_mode = false;
 
+// OEM System Image use
+static int use_config_in_performance = 1;
+
 #define LOW_POWER_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index/2]
 #define NORMAL_MAX_FREQ cpu_clust0_available_freqs[cpu_clust0_max_index]
 
@@ -229,6 +232,12 @@ static void rk_power_init(struct power_module *module)
     }
     gpu_max_index = i-1;
     if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
+
+    char propbuf_gsi[PROPERTY_VALUE_MAX];
+    property_get("ro.build.product", propbuf_gsi, "");
+
+    if (strcmp(propbuf_gsi, "generic_arm") == 0 || strcmp(propbuf_gsi, "generic_arm64") == 0)
+        use_config_in_performance = 0;
 }
 
 /*performs power management actions upon the
@@ -290,6 +299,11 @@ static void rk_power_hint(struct power_module *module, power_hint_t hint, void *
             break;
 
         case POWER_HINT_VR_MODE:
+            break;
+
+        case POWER_HINT_LAUNCH:
+            if (!use_config_in_performance)
+                performance_boost(mode);
             break;
 
         default:
