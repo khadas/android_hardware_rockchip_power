@@ -167,54 +167,54 @@ static void low_power_boost(int on)
 
 static void rk_power_init(struct power_module *module)
 {
-    if(DEBUG_EN)ALOGD("rk3328: power hal version 4.0\n");
-
-    int fd,count,i=0;
-    char cpu_clus0_freqs[BUFFER_LENGTH];
-    char gpu_freqs[BUFFER_LENGTH] ;
-    char*freq_split;
-
-    /*********************** obtain cpu cluster0 available freqs **************************/
-    if(fd = open (CPU_CLUST0_AVAIL_FREQ,O_RDONLY)){
-        count = read(fd,cpu_clus0_freqs,sizeof(cpu_clus0_freqs)-1);
-        if(count < 0) ALOGE("Error reading from %s\n", CPU_CLUST0_AVAIL_FREQ);
-        else
-            cpu_clus0_freqs[count] = '\0';
-    } else {
-        ALOGE("Error to open %s\n", CPU_CLUST0_AVAIL_FREQ);
-    }
-    if(DEBUG_EN)ALOGI("cpu_clus0_freqs:%s\n",cpu_clus0_freqs);
-
-    freq_split = strtok(cpu_clus0_freqs," ");
-    strcpy(cpu_clust0_available_freqs[0],freq_split);
-    if(DEBUG_EN)ALOGI("cpu_clust0 available freq[0]:%s\n",cpu_clust0_available_freqs[0]);
-    for(i=1;freq_split=strtok(NULL," ");i++){
-        strcpy(cpu_clust0_available_freqs[i],freq_split);
-        if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
-    }
-    cpu_clust0_max_index = i-2;
-    if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
-
-    /*********************** obtain gpu available freqs **************************/
-    if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
-        count = read(fd,gpu_freqs,sizeof(gpu_freqs)-1);
-        if(count < 0) ALOGE("Error reading from %s\n", GPU_AVAIL_FREQ);
-        else
-            gpu_freqs[count] = '\0';
-    } else {
-        ALOGE("Error to open %s\n", GPU_AVAIL_FREQ);
-    }
-    if(DEBUG_EN)ALOGI("gpu_freqs:%s\n",gpu_freqs);
-
-    freq_split = strtok(gpu_freqs," ");
-    strcpy(gpu_available_freqs[0],freq_split);
-    if(DEBUG_EN)ALOGI("gpu available freq[0]:%s\n",gpu_available_freqs[0]);
-    for(i=1;freq_split=strtok(NULL," ");i++){
-        strcpy(gpu_available_freqs[i],freq_split);
-        if(DEBUG_EN)ALOGI("gpu available freq[%d]:%s\n",i,gpu_available_freqs[i]);
-    }
-    gpu_max_index = i-1;
-    if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
+//    if(DEBUG_EN)ALOGD("rk3328: power hal version 4.0\n");
+//
+//    int fd,count,i=0;
+//    char cpu_clus0_freqs[BUFFER_LENGTH];
+//    char gpu_freqs[BUFFER_LENGTH] ;
+//    char*freq_split;
+//
+//    /*********************** obtain cpu cluster0 available freqs **************************/
+//    if(fd = open (CPU_CLUST0_AVAIL_FREQ,O_RDONLY)){
+//        count = read(fd,cpu_clus0_freqs,sizeof(cpu_clus0_freqs)-1);
+//        if(count < 0) ALOGE("Error reading from %s\n", CPU_CLUST0_AVAIL_FREQ);
+//        else
+//            cpu_clus0_freqs[count] = '\0';
+//    } else {
+//        ALOGE("Error to open %s\n", CPU_CLUST0_AVAIL_FREQ);
+//    }
+//    if(DEBUG_EN)ALOGI("cpu_clus0_freqs:%s\n",cpu_clus0_freqs);
+//
+//    freq_split = strtok(cpu_clus0_freqs," ");
+//    strcpy(cpu_clust0_available_freqs[0],freq_split);
+//    if(DEBUG_EN)ALOGI("cpu_clust0 available freq[0]:%s\n",cpu_clust0_available_freqs[0]);
+//    for(i=1;freq_split=strtok(NULL," ");i++){
+//        strcpy(cpu_clust0_available_freqs[i],freq_split);
+//        if(DEBUG_EN)ALOGI("cpu_clust0 available freq[%d]:%s\n",i,cpu_clust0_available_freqs[i]);
+//    }
+//    cpu_clust0_max_index = i-2;
+//    if(DEBUG_EN)ALOGI("cpu_clust0_max_index:%d\n",cpu_clust0_max_index);
+//
+//    /*********************** obtain gpu available freqs **************************/
+//    if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
+//        count = read(fd,gpu_freqs,sizeof(gpu_freqs)-1);
+//        if(count < 0) ALOGE("Error reading from %s\n", GPU_AVAIL_FREQ);
+//        else
+//            gpu_freqs[count] = '\0';
+//    } else {
+//        ALOGE("Error to open %s\n", GPU_AVAIL_FREQ);
+//    }
+//    if(DEBUG_EN)ALOGI("gpu_freqs:%s\n",gpu_freqs);
+//
+//    freq_split = strtok(gpu_freqs," ");
+//    strcpy(gpu_available_freqs[0],freq_split);
+//    if(DEBUG_EN)ALOGI("gpu available freq[0]:%s\n",gpu_available_freqs[0]);
+//    for(i=1;freq_split=strtok(NULL," ");i++){
+//        strcpy(gpu_available_freqs[i],freq_split);
+//        if(DEBUG_EN)ALOGI("gpu available freq[%d]:%s\n",i,gpu_available_freqs[i]);
+//    }
+//    gpu_max_index = i-1;
+//    if(DEBUG_EN)ALOGI("gpu_max_index:%d\n",gpu_max_index);
 }
 
 /*performs power management actions upon the
@@ -225,19 +225,19 @@ static void rk_power_init(struct power_module *module)
  */
 static void rk_power_set_interactive(struct power_module *module, int on)
 {
-    /*************Add appropriate actions for specific platform && product type *****************/
-    if(DEBUG_EN)ALOGD("power_set_interactive: %d\n", on);
-
-    /*
-     * Lower maximum frequency when screen is off.
-     */
-    sysfs_write(CPU_MAX_FREQ_PATH,
-                (!on || low_power_mode) ? LOW_POWER_MAX_FREQ : NORMAL_MAX_FREQ);
-    //sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
-    //sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
-    //sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
-    //sysfs_write(TOUCHSCREEN_POWER_PATH, on ? "1" : "0");
-    if(DEBUG_EN)ALOGD("power_set_interactive: %d done\n", on);
+//    /*************Add appropriate actions for specific platform && product type *****************/
+//    if(DEBUG_EN)ALOGD("power_set_interactive: %d\n", on);
+//
+//    /*
+//     * Lower maximum frequency when screen is off.
+//     */
+//    sysfs_write(CPU_MAX_FREQ_PATH,
+//                (!on || low_power_mode) ? LOW_POWER_MAX_FREQ : NORMAL_MAX_FREQ);
+//    //sysfs_write("/sys/devices/system/cpu/cpu1/online", on ? "1" : "0");
+//    //sysfs_write("/sys/devices/system/cpu/cpu2/online", on ? "1" : "0");
+//    //sysfs_write("/sys/devices/system/cpu/cpu3/online", on ? "1" : "0");
+//    //sysfs_write(TOUCHSCREEN_POWER_PATH, on ? "1" : "0");
+//    if(DEBUG_EN)ALOGD("power_set_interactive: %d done\n", on);
 }
 
 /*
@@ -247,49 +247,49 @@ static void rk_power_set_interactive(struct power_module *module, int on)
  */
 static void rk_power_hint(struct power_module *module, power_hint_t hint, void *data)
 {
-    /*************Add appropriate actions for specific platform && product type *****************/
-    int mode = 0;
-    switch (hint) {
-    case POWER_HINT_INTERACTION:
-        //touch_boost(mode);
-        break;
-
-    case POWER_HINT_VSYNC:
-        break;
-
-    case POWER_HINT_VIDEO_DECODE:
-        break;
-
-    case POWER_HINT_LOW_POWER:
-        /*if(data!=NULL) {
-            mode = *(int*)data;
-            low_power_boost(mode);
-        }*/
-        break;
-
-    case POWER_HINT_SUSTAINED_PERFORMANCE:
-        if(data != NULL) {
-            mode = *(int*)data;
-            performance_boost(mode);
-        } else {
-            mode = 0;
-            performance_boost(mode);
-        }
-        break;
-    case POWER_HINT_PERFORMANCE:
-        if(data != NULL) {
-            mode = *(int*)data;
-            performance_boost(mode);
-        } else {
-            mode = 0;
-            performance_boost(mode);
-        }
-        break;
-    case POWER_HINT_VR_MODE:
-        break;
-    default:
-        break;
-    }
+//    /*************Add appropriate actions for specific platform && product type *****************/
+//    int mode = 0;
+//    switch (hint) {
+//    case POWER_HINT_INTERACTION:
+//        //touch_boost(mode);
+//        break;
+//
+//    case POWER_HINT_VSYNC:
+//        break;
+//
+//    case POWER_HINT_VIDEO_DECODE:
+//        break;
+//
+//    case POWER_HINT_LOW_POWER:
+//        /*if(data!=NULL) {
+//            mode = *(int*)data;
+//            low_power_boost(mode);
+//        }*/
+//        break;
+//
+//    case POWER_HINT_SUSTAINED_PERFORMANCE:
+//        if(data != NULL) {
+//            mode = *(int*)data;
+//            performance_boost(mode);
+//        } else {
+//            mode = 0;
+//            performance_boost(mode);
+//        }
+//        break;
+//    case POWER_HINT_PERFORMANCE:
+//        if(data != NULL) {
+//            mode = *(int*)data;
+//            performance_boost(mode);
+//        } else {
+//            mode = 0;
+//            performance_boost(mode);
+//        }
+//        break;
+//    case POWER_HINT_VR_MODE:
+//        break;
+//    default:
+//        break;
+//    }
 }
 
 static struct hw_module_methods_t power_module_methods = {

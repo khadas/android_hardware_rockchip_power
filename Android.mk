@@ -46,7 +46,7 @@ endif
 include $(CLEAR_VARS)
 
 ifneq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 5.0)))
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+LOCAL_MODULE_RELATIVE_PATH := hw
 else
 ifneq ($(strip $(TARGET_2ND_ARCH)), )
 LOCAL_MULTILIB := both
