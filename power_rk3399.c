@@ -58,13 +58,13 @@
 #define CPU_CLUST1_SCAL_MIN_FREQ "/sys/devices/system/cpu/cpufreq/policy4/scaling_min_freq"
 #define CPU_CLUST1_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/policy4/interactive/boostpulse"
 
-#define GPU_GOV_PATH "/sys/class/devfreq/ff9a0000.gpu/governor"
-#define GPU_AVAIL_FREQ "/sys/class/devfreq/ff9a0000.gpu/available_frequencies"
-#define GPU_MIN_FREQ "/sys/class/devfreq/ff9a0000.gpu/min_freq"
-#define GPU_MAX_FREQ "/sys/class/devfreq/ff9a0000.gpu/max_freq"
+#define GPU_GOV_PATH "/sys/class/devfreq/devfreq1/governor"
+#define GPU_AVAIL_FREQ "/sys/class/devfreq/devfreq1/available_frequencies"
+#define GPU_MIN_FREQ "/sys/class/devfreq/devfreq1/min_freq"
+#define GPU_MAX_FREQ "/sys/class/devfreq/devfreq1/max_freq"
 
 #ifdef DDR_BOOST_SUPPORT
-#define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
+#define DDR_SCENE_PATH "/sys/class/devfreq/devfreq0/system_status"
 #endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
