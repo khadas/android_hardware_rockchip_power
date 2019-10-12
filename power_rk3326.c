@@ -64,19 +64,51 @@ static int use_config_in_performance = 1;
 #define CPU_CLUST0_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/policy0/interactive/boostpulse"
 #define CPU_CLUST0_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq"
 
-#define GPU_GOV_PATH "/sys/class/devfreq/devfreq1/governor"
-#define GPU_AVAIL_FREQ "/sys/class/devfreq/devfreq1/available_frequencies"
-#define GPU_MIN_FREQ "/sys/class/devfreq/devfreq1/min_freq"
-#define GPU_MAX_FREQ "/sys/class/devfreq/devfreq1/max_freq"
+enum gpu_num{
+	GPU_GOV_PATH = 0,
+	GPU_AVAIL_FREQ = 1,
+	GPU_MIN_FREQ = 2,
+	GPU_MAX_FREQ = 3,
+	GPU_PATH_NUM
+};
 
-#ifdef DDR_BOOST_SUPPORT
-#define DDR_SCENE_PATH "/sys/class/devfreq/devfreq0/system_status"
-#endif
-
+static char ddr_devfreq_path[BUFFER_LENGTH];
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int cpu_clust0_max_index = 0;
+static char gpu_devfreq_path[GPU_PATH_NUM][BUFFER_LENGTH];
 static char gpu_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
 static unsigned int gpu_max_index = 0;
+void get_gpu_ddr_devfreq_path()
+{
+	int fd;
+
+	memset(gpu_devfreq_path[GPU_GOV_PATH], '\0', sizeof(gpu_devfreq_path[GPU_GOV_PATH]));
+	memset(gpu_devfreq_path[GPU_AVAIL_FREQ], '\0', sizeof(gpu_devfreq_path[GPU_AVAIL_FREQ]));
+	memset(gpu_devfreq_path[GPU_MIN_FREQ], '\0', sizeof(gpu_devfreq_path[GPU_MIN_FREQ]));
+	memset(gpu_devfreq_path[GPU_MAX_FREQ], '\0', sizeof(gpu_devfreq_path[GPU_MAX_FREQ]));
+	memset(ddr_devfreq_path, '\0', sizeof(ddr_devfreq_path));	
+	
+	if (fd = open ("sys/class/devfreq/devfreq0/device/gpuinfo",O_RDONLY)){
+		strcpy(gpu_devfreq_path[GPU_GOV_PATH],"sys/class/devfreq/devfreq0/available_governors");
+		strcpy(gpu_devfreq_path[GPU_AVAIL_FREQ],"sys/class/devfreq/devfreq0/available_frequencies");
+		strcpy(gpu_devfreq_path[GPU_MIN_FREQ],"sys/class/devfreq/devfreq0/min_freq");
+		strcpy(gpu_devfreq_path[GPU_MAX_FREQ],"sys/class/devfreq/devfreq0/max_freq");
+		strcpy(ddr_devfreq_path,"sys/class/devfreq/devfreq1/system_status");
+		if(DEBUG_EN)ALOGI("gpu:devfreq0 , ddr:devfreq1\n");
+		close(fd);
+		
+    } else if (fd = open ("sys/class/devfreq/devfreq1/device/gpuinfo",O_RDONLY)) {
+        strcpy(gpu_devfreq_path[GPU_GOV_PATH],"sys/class/devfreq/devfreq1/available_governors");
+		strcpy(gpu_devfreq_path[GPU_AVAIL_FREQ],"sys/class/devfreq/devfreq1/available_frequencies");
+		strcpy(gpu_devfreq_path[GPU_MIN_FREQ],"sys/class/devfreq/devfreq1/min_freq");
+		strcpy(gpu_devfreq_path[GPU_MAX_FREQ],"sys/class/devfreq/devfreq1/max_freq");
+		strcpy(ddr_devfreq_path,"sys/class/devfreq/devfreq0/system_status");
+		if(DEBUG_EN)ALOGI("gpu:devfreq1 , ddr:devfreq0\n");
+		close(fd);
+    } else{
+		ALOGE("Error gpu devfreq path not found\n");
+	}
+}
 
 static void sysfs_write(char *path, char *s)
 {
@@ -126,14 +158,14 @@ static void gpu_boost(unsigned int max, unsigned int min)
 
     if(max>=0 && max<=gpu_max_index && *gpu_available_freqs[max]>='0' && *gpu_available_freqs[max]<='9' ){
         if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",max,gpu_available_freqs[max]);
-        sysfs_write(GPU_MAX_FREQ,gpu_available_freqs[max]);
+        sysfs_write(gpu_devfreq_path[GPU_MAX_FREQ],gpu_available_freqs[max]);
     } else {
         ALOGE("Invalid max freq can not be set!");
     }
 
     if(min>=0 && min<=gpu_max_index && *gpu_available_freqs[min]>='0' && *gpu_available_freqs[min]<='9' ){
         if(DEBUG_EN)ALOGI("gpu_available_freqs[%d]:%s",min,gpu_available_freqs[min]);
-        sysfs_write(GPU_MIN_FREQ,gpu_available_freqs[min]);
+        sysfs_write(gpu_devfreq_path[GPU_MIN_FREQ],gpu_available_freqs[min]);
     } else {
         ALOGE("Invalid min freq can not be set!");
     }
@@ -151,9 +183,9 @@ static void performance_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK performance_boost, on=%d", on);
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "performance" : "interactive");
-    sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
+    sysfs_write(gpu_devfreq_path[GPU_GOV_PATH],on ? "performance" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_SCENE_PATH,on ? "p" : "n");
+    sysfs_write(ddr_devfreq_path,on ? "p" : "n");
 #endif
 }
 
@@ -162,10 +194,10 @@ static void low_power_boost(int on)
 {
     if(DEBUG_EN)ALOGI("RK low_power_boost Entered!");
     //sysfs_write(CPU_CLUST0_GOV_PATH, on ? "powersave" : "interactive");
-    //sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
+    //sysfs_write(gpu_devfreq_path[GPU_GOV_PATH],on ? "powersave" : "simple_ondemand");
     low_power_mode = on;
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
+    sysfs_write(ddr_devfreq_path,on ? "l" : "L");
 #endif
 }
 
@@ -178,6 +210,7 @@ static void rk_power_init(struct power_module *module)
     char gpu_freqs[BUFFER_LENGTH] ;
     char*freq_split;
 
+	get_gpu_ddr_devfreq_path();
     /*********************** obtain cpu cluster0 available freqs **************************/
     if(fd = open (CPU_CLUST0_AVAIL_FREQ,O_RDONLY)){
         count = read(fd,cpu_clus0_freqs,sizeof(cpu_clus0_freqs)-1);
@@ -206,7 +239,7 @@ static void rk_power_init(struct power_module *module)
     
     sysfs_write(CPU_CLUST0_HISPEED_FREQ_PATH,"600000");
     /*********************** obtain gpu available freqs **************************/
-    if(fd = open (GPU_AVAIL_FREQ,O_RDONLY)){
+    if(fd = open (gpu_devfreq_path[GPU_AVAIL_FREQ],O_RDONLY)){
         count = read(fd,gpu_freqs,sizeof(gpu_freqs)-1);
         if(count < 0){
 			ALOGE("Error reading from %s\n", GPU_AVAIL_FREQ);
