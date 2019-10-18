@@ -153,7 +153,7 @@ static void performance_boost(int on)
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "performance" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_SCENE_PATH,on ? ""performance"" : "dmc_ondemand");
+    sysfs_write(DDR_SCENE_PATH,on ? "performance" : "dmc_ondemand");
 #endif
 }
 
