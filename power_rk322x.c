@@ -62,10 +62,10 @@ static bool low_power_mode = false;
 #define CPU_CLUST0_BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/policy0/interactive/boostpulse"
 #define CPU_CLUST0_HISPEED_FREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/interactive/hispeed_freq"
 
-#define GPU_GOV_PATH "/sys/class/devfreq/20001000.gpu/governor"
-#define GPU_AVAIL_FREQ "/sys/class/devfreq/20001000.gpu/available_frequencies"
-#define GPU_MIN_FREQ "/sys/class/devfreq/20001000.gpu/min_freq"
-#define GPU_MAX_FREQ "/sys/class/devfreq/20001000.gpu/max_freq"
+#define GPU_GOV_PATH "/sys/class/devfreq/20000000.gpu/governor"
+#define GPU_AVAIL_FREQ "/sys/class/devfreq/20000000.gpu/available_frequencies"
+#define GPU_MIN_FREQ "/sys/class/devfreq/20000000.gpu/min_freq"
+#define GPU_MAX_FREQ "/sys/class/devfreq/20000000.gpu/max_freq"
 
 #ifdef DDR_BOOST_SUPPORT
 #define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
