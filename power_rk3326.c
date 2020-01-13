@@ -70,7 +70,7 @@ static int use_config_in_performance = 1;
 #define GPU_MAX_FREQ "/sys/class/devfreq/ff400000.gpu/max_freq"
 
 #ifdef DDR_BOOST_SUPPORT
-#define DDR_SCENE_PATH "/sys/class/devfreq/dmc/governor"
+#define DDR_SCENE_PATH "/sys/class/devfreq/dmc/system_status"
 #endif
 
 static char cpu_clust0_available_freqs[FREQ_LENGTH][FREQ_LENGTH];
@@ -153,7 +153,7 @@ static void performance_boost(int on)
     sysfs_write(CPU_CLUST0_GOV_PATH, on ? "performance" : "interactive");
     sysfs_write(GPU_GOV_PATH,on ? "performance" : "simple_ondemand");
 #ifdef DDR_BOOST_SUPPORT
-    sysfs_write(DDR_SCENE_PATH,on ? "performance" : "dmc_ondemand");
+    sysfs_write(DDR_SCENE_PATH,on ? "p" : "n");
 #endif
 }
 
@@ -165,7 +165,7 @@ static void low_power_boost(int on)
     sysfs_write(GPU_GOV_PATH,on ? "powersave" : "simple_ondemand");
     low_power_mode = on;
 #ifdef DDR_BOOST_SUPPORT
-    //sysfs_write(DDR_SCENE_PATH,on ? "powersave" : "dmc_ondemand");
+    sysfs_write(DDR_SCENE_PATH,on ? "l" : "L");
 #endif
 }
 
